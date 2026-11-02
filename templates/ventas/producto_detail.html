@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ product.nombre }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">{{ product.nombre }}</h1>
+  <div>
+    <a href="{% url 'producto_update' product.pk %}" class="btn btn-primary">Editar</a>
+    <a href="{% url 'producto_list' %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Código</dt><dd class="col-sm-9"><code>{{ product.codigo }}</code></dd>
+      <dt class="col-sm-3">Descripción</dt><dd class="col-sm-9">{{ product.descripcion|default:"—" }}</dd>
+      <dt class="col-sm-3">Precio</dt><dd class="col-sm-9">${{ product.precio|floatformat:"0g" }}</dd>
+      <dt class="col-sm-3">Stock</dt>
+      <dd class="col-sm-9">
+        {% if product.stock == 0 %}
+          <span class="badge bg-danger">Agotado</span>
+        {% elif product.is_low_stock %}
+          <span class="badge bg-warning text-dark">{{ product.stock }} · crítico</span>
+        {% else %}
+          <span class="badge bg-success">{{ product.stock }}</span>
+        {% endif %}
+      </dd>
+    </dl>
+  </div>
+</div>
+
+<h2 class="h5">Últimas ventas de este producto</h2>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead class="table-light">
+        <tr><th>Folio</th><th>Fecha</th><th class="text-end">Cantidad</th><th class="text-end">Subtotal</th></tr>
+      </thead>
+      <tbody>
+        {% for line in recent_lines %}
+          <tr>
+            <td><a href="{% url 'venta_detail' line.venta.pk %}">{{ line.venta.folio }}</a></td>
+            <td>{{ line.venta.fecha|date:"d/m/Y" }}</td>
+            <td class="text-end">{{ line.cantidad }}</td>
+            <td class="text-end">${{ line.subtotal|floatformat:"0g" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-3">Sin ventas registradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

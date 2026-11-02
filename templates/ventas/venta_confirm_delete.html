@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Eliminar venta{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card border-danger shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 text-danger">Eliminar venta</h1>
+        <p class="mb-1">¿Seguro que quieres eliminar esta venta?</p>
+        <p class="fw-bold">{{ sale.folio }} — {{ sale.cliente }} ({{ sale.fecha|date:"d/m/Y" }})</p>
+        <p class="text-muted small">Se eliminarán todos sus detalles y el stock de los productos será restituido.</p>
+        <form method="post" class="d-flex gap-2">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+          <a href="{% url 'venta_detail' sale.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

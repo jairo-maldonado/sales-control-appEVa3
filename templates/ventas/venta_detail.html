@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Venta {{ sale.folio }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Venta {{ sale.folio }}</h1>
+  <div>
+    <a href="{% url 'venta_update' sale.pk %}" class="btn btn-primary">Editar</a>
+    <a href="{% url 'venta_delete' sale.pk %}" class="btn btn-outline-danger">Eliminar</a>
+    <a href="{% url 'venta_list' %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Folio</dt><dd class="col-sm-9">{{ sale.folio }}</dd>
+      <dt class="col-sm-3">Cliente</dt><dd class="col-sm-9">{{ sale.cliente }}</dd>
+      <dt class="col-sm-3">Fecha</dt><dd class="col-sm-9">{{ sale.fecha|date:"d/m/Y" }}</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Producto</th>
+          <th class="text-end">Cantidad</th>
+          <th class="text-end">Precio unitario</th>
+          <th class="text-end">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in details %}
+          <tr>
+            <td><a href="{% url 'producto_detail' line.producto.pk %}">{{ line.producto.nombre }}</a></td>
+            <td class="text-end">{{ line.cantidad }}</td>
+            <td class="text-end">${{ line.precio_unitario|floatformat:"0g" }}</td>
+            <td class="text-end">${{ line.subtotal|floatformat:"0g" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-3">Esta venta no tiene productos.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="table-light">
+          <th colspan="3" class="text-end">Total</th>
+          <th class="text-end">${{ total|floatformat:"0g" }}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

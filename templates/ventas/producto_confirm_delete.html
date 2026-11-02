@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Eliminar producto{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card border-danger shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 text-danger">Eliminar producto</h1>
+        <p class="mb-1">¿Seguro que quieres eliminar este producto?</p>
+        <p class="fw-bold"><code>{{ product.codigo }}</code> — {{ product.nombre }}</p>
+        <p class="text-muted small">Esta acción no se puede deshacer. Si el producto tiene ventas asociadas, no podrá eliminarse.</p>
+        <form method="post" class="d-flex gap-2">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+          <a href="{% url 'producto_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

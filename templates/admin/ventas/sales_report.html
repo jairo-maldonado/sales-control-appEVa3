@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Inicio</a> &rsaquo;
+  <a href="{% url 'admin:ventas_venta_changelist' %}">Ventas</a> &rsaquo;
+  Reporte por fechas
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <form method="get">
+    {{ form.non_field_errors }}
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row">
+          {{ field.errors }}
+          {{ field.label_tag }} {{ field }}
+        </div>
+      {% endfor %}
+    </fieldset>
+    <input type="submit" value="Generar reporte" class="default">
+  </form>
+
+  {% if report_ready %}
+    <h2>Resultados</h2>
+    <p>
+      <strong>Ventas encontradas:</strong> {{ sales_count }} &nbsp;|&nbsp;
+      <strong>Monto total:</strong> ${{ grand_total|floatformat:"0g" }}
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in sales %}
+          <tr>
+            <td><a href="{% url 'admin:ventas_venta_change' sale.pk %}">{{ sale.folio }}</a></td>
+            <td>{{ sale.cliente }}</td>
+            <td>{{ sale.fecha|date:"d/m/Y" }}</td>
+            <td>${{ sale.total_amount|default:0|floatformat:"0g" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">No hay ventas en ese rango.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

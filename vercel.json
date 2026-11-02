@@ -1,0 +1,8 @@
+{
+  "buildCommand": "bash build_files.sh",
+  "functions": {
+    "core/wsgi.py": {
+      "maxDuration": 30
+    }
+  }
+}
