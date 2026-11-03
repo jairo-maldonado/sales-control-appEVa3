@@ -1,8 +1,9 @@
 import logging
+import uuid
 from decimal import Decimal
 
 from django.db import models, transaction
-from django.db.models import F, Max, Sum
+from django.db.models import F, Sum
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.utils import timezone
@@ -53,10 +54,17 @@ class Venta(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        if not self.folio:
-            last_id = Venta.objects.aggregate(max_id=Max("id"))["max_id"] or 0
-            self.folio = f"V-{last_id + 1:06d}"
-        super().save(*args, **kwargs)
+        needs_folio = is_new and not self.folio
+
+        if needs_folio:
+            self.folio = f"TMP-{uuid.uuid4().hex[:12]}"
+
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            if needs_folio:
+                self.folio = f"V-{self.pk:06d}"
+                super().save(update_fields=["folio"])
+
         if is_new:
             logger.info("Sale created: %s (client: %s)", self.folio, self.cliente)
 
