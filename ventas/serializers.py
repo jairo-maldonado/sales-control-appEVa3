@@ -139,3 +139,4 @@ class SaleSerializer(serializers.ModelSerializer):
         instance.fecha = validated_data.get("fecha", instance.fecha)
         instance.save()
         return instance
+    

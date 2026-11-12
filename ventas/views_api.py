@@ -101,3 +101,4 @@ class SaleViewSet(viewsets.ModelViewSet):
             sale.delete()
         logger.info("Sale %s deleted via API by user %s", sale.folio, request.user.pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
