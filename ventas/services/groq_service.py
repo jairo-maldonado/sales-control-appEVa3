@@ -2,193 +2,174 @@ import json
 import os
 import urllib.error
 import urllib.request
-from datetime import timedelta
-
-from django.db.models import Sum
-from django.utils import timezone
-
-from ventas.models import DetalleVenta, Producto, Venta
-
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-ENFOQUES_VALIDOS = {"general", "reposicion", "ventas"}
+from typing import Any
 
 
 class GroqServiceError(Exception):
-    def __init__(self, message, status_code=502):
+    def __init__(self, message: str, status_code: int = 502):
         super().__init__(message)
+        self.message = message
         self.status_code = status_code
 
 
-def construir_contexto_negocio(dias=30):
-    hoy = timezone.localdate()
-    fecha_inicio = hoy - timedelta(days=dias)
-
-    productos = list(Producto.objects.all())
-    sin_stock = [
-        {"codigo": p.codigo, "nombre": p.nombre, "stock": p.stock, "precio": float(p.precio)}
-        for p in productos
-        if p.stock == 0
-    ]
-    stock_bajo = [
-        {"codigo": p.codigo, "nombre": p.nombre, "stock": p.stock, "precio": float(p.precio)}
-        for p in productos
-        if 0 < p.stock <= Producto.LOW_STOCK_THRESHOLD
-    ]
-
-    ventas_periodo = Venta.objects.filter(fecha__gte=fecha_inicio)
-    total_ventas_periodo = ventas_periodo.count()
-    ingresos_periodo = (
-        DetalleVenta.objects.filter(venta__fecha__gte=fecha_inicio).aggregate(
-            total=Sum("subtotal")
-        )["total"]
-        or 0
+def _build_system_prompt(enfoque: str) -> str:
+    enfoque_map = {
+        "general": "diagnostico integral de ventas, rotacion e inventario",
+        "reposicion": "priorizacion de reposicion de stock, quiebres y productos criticos",
+        "rentabilidad": "margenes, productos mas vendidos e impulso de ingresos",
+    }
+    foco = enfoque_map.get(enfoque, enfoque_map["general"])
+    return (
+        "Eres un analista de inteligencia comercial para una tienda en Chile. "
+        f"Responde unicamente con un objeto JSON valido (sin markdown ni texto extra) enfocado en {foco}. "
+        "El JSON debe contener exactamente estas claves: "
+        '"resumen_ejecutivo" (string breve y claro en espanol), '
+        '"nivel_riesgo" (string: "BAJO", "MEDIO" o "ALTO"), '
+        '"acciones_prioritarias" (lista de 3 a 5 strings cortos), '
+        '"productos_criticos" (lista de strings con nombres de productos en riesgo o sin stock).'
     )
 
-    top_productos = list(
-        DetalleVenta.objects.filter(venta__fecha__gte=fecha_inicio)
-        .values("producto__codigo", "producto__nombre", "producto__stock")
-        .annotate(unidades=Sum("cantidad"), ingresos=Sum("subtotal"))
-        .order_by("-unidades")[:5]
+
+def _build_user_prompt(contexto: dict[str, Any], enfoque: str) -> str:
+    return (
+        f"Enfoque solicitado: {enfoque}\n"
+        f"Datos comerciales reales:\n{json.dumps(contexto, ensure_ascii=False, default=str)}"
     )
-    for item in top_productos:
-        item["ingresos"] = float(item["ingresos"] or 0)
+
+
+def _extract_json_payload(raw_text: str) -> dict[str, Any]:
+    cleaned = raw_text.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError:
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise GroqServiceError("La respuesta del modelo no contiene un JSON valido.", 502)
+        try:
+            parsed = json.loads(cleaned[start : end + 1])
+        except json.JSONDecodeError as exc:
+            raise GroqServiceError("La respuesta del modelo esta incompleta.", 502) from exc
+
+    if not isinstance(parsed, dict):
+        raise GroqServiceError("El formato JSON devuelto por el modelo no es valido.", 502)
+
+    resumen = str(parsed.get("resumen_ejecutivo") or parsed.get("resumen") or "").strip()
+    riesgo = str(parsed.get("nivel_riesgo") or parsed.get("riesgo") or "MEDIO").strip().upper()
+    if riesgo not in {"BAJO", "MEDIO", "ALTO"}:
+        riesgo = "MEDIO"
+
+    acciones_raw = parsed.get("acciones_prioritarias") or parsed.get("acciones") or []
+    if isinstance(acciones_raw, str):
+        acciones = [acciones_raw.strip()] if acciones_raw.strip() else []
+    elif isinstance(acciones_raw, list):
+        acciones = [str(item).strip() for item in acciones_raw if str(item).strip()]
+    else:
+        acciones = []
+
+    criticos_raw = parsed.get("productos_criticos") or parsed.get("criticos") or []
+    if isinstance(criticos_raw, str):
+        criticos = [criticos_raw.strip()] if criticos_raw.strip() else []
+    elif isinstance(criticos_raw, list):
+        criticos = [str(item).strip() for item in criticos_raw if str(item).strip()]
+    else:
+        criticos = []
+
+    if not resumen and not acciones:
+        raise GroqServiceError("La respuesta del modelo esta incompleta.", 502)
+
+    if not resumen:
+        resumen = "Analisis generado con recomendaciones operativas para ventas e inventario."
 
     return {
-        "fecha_corte": str(hoy),
-        "dias_analizados": dias,
-        "total_productos": len(productos),
-        "cantidad_sin_stock": len(sin_stock),
-        "cantidad_stock_bajo": len(stock_bajo),
-        "productos_sin_stock": sin_stock[:10],
-        "productos_stock_bajo": stock_bajo[:10],
-        "total_ventas_periodo": total_ventas_periodo,
-        "ingresos_periodo": float(ingresos_periodo),
-        "top_productos_vendidos": top_productos,
+        "resumen_ejecutivo": resumen,
+        "nivel_riesgo": riesgo,
+        "acciones_prioritarias": acciones[:5],
+        "productos_criticos": criticos[:8],
     }
 
 
-def _validar_respuesta_ia(data):
-    if not isinstance(data, dict):
-        raise GroqServiceError("La respuesta del modelo no tiene formato JSON válido.", 502)
-
-    campos_requeridos = {
-        "resumen_ejecutivo",
-        "nivel_riesgo",
-        "acciones_prioritarias",
-        "productos_criticos",
-    }
-    if not campos_requeridos.issubset(data.keys()):
-        raise GroqServiceError("La respuesta del modelo está incompleta.", 502)
-
-    if data["nivel_riesgo"] not in {"BAJO", "MEDIO", "ALTO"}:
-        data["nivel_riesgo"] = "MEDIO"
-
-    if not isinstance(data["acciones_prioritarias"], list):
-        raise GroqServiceError("El campo acciones_prioritarias debe ser una lista.", 502)
-
-    if not isinstance(data["productos_criticos"], list):
-        raise GroqServiceError("El campo productos_criticos debe ser una lista.", 502)
-
-    return {
-        "resumen_ejecutivo": str(data["resumen_ejecutivo"]).strip(),
-        "nivel_riesgo": data["nivel_riesgo"],
-        "acciones_prioritarias": [str(a).strip() for a in data["acciones_prioritarias"][:5]],
-        "productos_criticos": [str(p).strip() for p in data["productos_criticos"][:5]],
-    }
-
-
-def ejecutar_analisis_groq(enfoque="general", dias=30):
-    if enfoque not in ENFOQUES_VALIDOS:
-        raise GroqServiceError(
-            "Enfoque inválido. Valores permitidos: general, reposicion, ventas.", 400
-        )
-
+def generar_diagnostico_groq(contexto: dict[str, Any], enfoque: str = "general") -> dict[str, Any]:
     api_key = os.environ.get("GROQ_API_KEY", "").strip()
     if not api_key:
         raise GroqServiceError(
-            "Servicio de IA no configurado en el servidor (falta GROQ_API_KEY).", 503
+            "Servicio de IA no configurado en el servidor (falta GROQ_API_KEY).",
+            503,
         )
 
-    modelo = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b").strip()
+    model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b").strip() or "openai/gpt-oss-20b"
+    timeout_raw = os.environ.get("GROQ_TIMEOUT", "15").strip()
     try:
-        timeout = int(os.environ.get("GROQ_TIMEOUT", "10"))
+        timeout = max(5, min(60, int(timeout_raw)))
     except ValueError:
-        timeout = 10
+        timeout = 15
 
-    contexto = construir_contexto_negocio(dias=dias)
-
-    prompt_sistema = (
-        "Eres un analista senior de inventario y ventas para un comercio minorista en Chile. "
-        "Analiza estrictamente los datos entregados sin inventar cifras ni productos. "
-        "Responde UNICAMENTE con un objeto JSON válido con estas claves exactas: "
-        "resumen_ejecutivo (string de 2 a 3 frases claras en español), "
-        "nivel_riesgo (exactamente 'BAJO', 'MEDIO' o 'ALTO'), "
-        "acciones_prioritarias (lista de 3 a 5 acciones concretas en español), "
-        "productos_criticos (lista con nombres de productos que requieren atención inmediata)."
-    )
-
-    prompt_usuario = (
-        f"Enfoque solicitado: {enfoque}. "
-        f"Datos reales del sistema: {json.dumps(contexto, ensure_ascii=False)}"
-    )
-
+    url = "[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)"
     payload = {
-        "model": modelo,
+        "model": model,
         "temperature": 0.2,
+        "max_tokens": 1500,
         "response_format": {"type": "json_object"},
         "messages": [
-            {"role": "system", "content": prompt_sistema},
-            {"role": "user", "content": prompt_usuario},
+            {"role": "system", "content": _build_system_prompt(enfoque)},
+            {"role": "user", "content": _build_user_prompt(contexto, enfoque)},
         ],
     }
 
     req = urllib.request.Request(
-        GROQ_API_URL,
+        url,
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "User-Agent": "SalesControlES04/1.0",
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         },
         method="POST",
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
-            body = json.loads(response.read().decode("utf-8"))
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        if exc.code == 429:
-            raise GroqServiceError(
-                "Límite de uso de GroqCloud alcanzado. Intenta nuevamente en unos segundos.",
-                429,
-            )
-        if exc.code in (401, 403):
-            raise GroqServiceError(
-                "Credenciales de GroqCloud rechazadas por el proveedor.", 502
-            )
+        detail = exc.read().decode("utf-8", errors="ignore")
         raise GroqServiceError(
-            f"Error HTTP {exc.code} al consultar el servicio de IA.", 502
-        )
-    except urllib.error.URLError:
+            f"Error HTTP {exc.code} al consultar el servicio de IA. {detail[:180]}".strip(),
+            502,
+        ) from exc
+    except urllib.error.URLError as exc:
         raise GroqServiceError(
-            "No fue posible conectar con GroqCloud o se superó el tiempo de espera.", 504
-        )
-    except TimeoutError:
+            f"No fue posible conectar con GroqCloud: {exc.reason}",
+            502,
+        ) from exc
+    except TimeoutError as exc:
         raise GroqServiceError(
-            "Tiempo de espera agotado al consultar GroqCloud.", 504
-        )
+            "El servicio de IA excedio el tiempo de espera configurado.",
+            504,
+        ) from exc
+    except Exception as exc:
+        raise GroqServiceError(
+            f"Error inesperado al consultar el servicio de IA: {exc}",
+            502,
+        ) from exc
 
-    try:
-        contenido = body["choices"][0]["message"]["content"]
-        parsed = json.loads(contenido)
-    except (KeyError, IndexError, TypeError, json.JSONDecodeError):
-        raise GroqServiceError(
-            "El proveedor de IA devolvió una respuesta inválida o malformada.", 502
-        )
+    choices = body.get("choices") or []
+    if not choices:
+        raise GroqServiceError("La respuesta del modelo esta incompleta.", 502)
 
-    resultado_validado = _validar_respuesta_ia(parsed)
-    return {
-        "modelo": modelo,
-        "datos_entrada": contexto,
-        "resultado": resultado_validado,
-    }
+    message = choices[0].get("message") or {}
+    content = message.get("content") or ""
+    if not str(content).strip():
+        raise GroqServiceError("La respuesta del modelo esta incompleta.", 502)
+
+    resultado = _extract_json_payload(str(content))
+    resultado["modelo"] = model
+    return resultado

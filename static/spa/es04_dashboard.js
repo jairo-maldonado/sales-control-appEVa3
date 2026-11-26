@@ -545,7 +545,15 @@
           activeAnalysis = created;
           renderAnalysisDetail(activeAnalysis, ctx);
           renderHistory(ctx);
-          ctx.showAlert("Diagnóstico IA generado y guardado en base de datos.", "success");
+
+          if (created && created.estado === "OK") {
+            ctx.showAlert("Diagnóstico IA generado y guardado en base de datos.", "success");
+          } else {
+            const msg = (created && created.mensaje_error) || "El análisis quedó registrado con observaciones.";
+            errorBox.textContent = msg;
+            errorBox.classList.remove("d-none");
+            ctx.showAlert(msg, "warning");
+          }
         } catch (error) {
           if (error.status !== 401) {
             errorBox.textContent = error.message || "Error al consultar el servicio de IA.";
