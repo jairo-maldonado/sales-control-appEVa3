@@ -13,7 +13,7 @@ from .forms import (
     SalesReportForm,
     VentaForm,
 )
-from .models import DetalleVenta, Producto, Venta
+from .models import AnalisisIA, DetalleVenta, Producto, Venta
 
 admin.site.site_header = "Control de Ventas - Administración"
 admin.site.site_title = "Control de Ventas"
@@ -103,3 +103,23 @@ class VentaAdmin(admin.ModelAdmin):
             )
 
         return TemplateResponse(request, "admin/ventas/sales_report.html", context)
+
+
+@admin.register(AnalisisIA)
+class AnalisisIAAdmin(admin.ModelAdmin):
+    list_display = ("id", "fecha_creacion", "usuario", "enfoque", "modelo", "estado")
+    list_filter = ("estado", "enfoque", "fecha_creacion")
+    search_fields = ("usuario__username", "modelo", "mensaje_error")
+    readonly_fields = (
+        "usuario",
+        "fecha_creacion",
+        "enfoque",
+        "modelo",
+        "estado",
+        "datos_entrada",
+        "resultado",
+        "mensaje_error",
+    )
+
+    def has_add_permission(self, request):
+        return False

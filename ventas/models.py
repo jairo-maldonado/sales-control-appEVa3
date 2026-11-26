@@ -2,6 +2,7 @@ import logging
 import uuid
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models, transaction
 from django.db.models import F, Sum
 from django.db.models.signals import pre_delete
@@ -136,3 +137,34 @@ def restore_stock_on_delete(sender, instance, **kwargs):
         logger.info(
             "Stock restored: product %s, +%s units", stored["producto_id"], stored["cantidad"]
         )
+    
+class AnalisisIA(models.Model):
+    ESTADO_OK = "OK"
+    ESTADO_ERROR = "ERROR"
+    ESTADOS = [
+        (ESTADO_OK, "Exitoso"),
+        (ESTADO_ERROR, "Error"),
+    ]
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="analisis_ia",
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    enfoque = models.CharField(max_length=40, default="general")
+    modelo = models.CharField(max_length=80, blank=True)
+    estado = models.CharField(max_length=10, choices=ESTADOS, default=ESTADO_OK)
+    datos_entrada = models.JSONField(default=dict)
+    resultado = models.JSONField(default=dict, blank=True)
+    mensaje_error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-fecha_creacion"]
+        verbose_name = "análisis IA"
+        verbose_name_plural = "análisis IA"
+
+    def __str__(self):
+        return f"Análisis #{self.pk} ({self.enfoque}) - {self.estado}"    

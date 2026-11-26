@@ -9,7 +9,7 @@
   };
   const STORAGE_KEY = "sales_spa_session";
   const PAGE_SIZE = 10;
-  const ROUTES = ["products", "sales", "new-sale"];
+  const ROUTES = ["dashboard", "products", "sales", "new-sale"];
   const currency = new Intl.NumberFormat("es-CL", {
     style: "currency",
     currency: "CLP",
@@ -25,7 +25,7 @@
   };
   const productsView = { page: 1, search: "" };
   const salesView = { page: 1, dateFrom: "", dateTo: "" };
-  let currentRoute = "products";
+  let currentRoute = "dashboard";
   let refreshPromise = null;
 
   const $ = (selector) => document.querySelector(selector);
@@ -79,7 +79,6 @@
         })
       );
     } catch (error) {
-      /* storage unavailable: session lives in memory only */
     }
   }
 
@@ -92,7 +91,6 @@
     try {
       sessionStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-      /* nothing to clear */
     }
   }
 
@@ -256,6 +254,7 @@
   }
 
   function logout(message, type = "info") {
+    if (window.ES04Dashboard) window.ES04Dashboard.destroy();
     clearSession();
     showLogin();
     if (message) showAlert(message, type);
@@ -283,18 +282,29 @@
   function route() {
     if (!state.access) return;
     const requested = location.hash.replace("#", "");
-    currentRoute = ROUTES.includes(requested) ? requested : "products";
+    currentRoute = ROUTES.includes(requested) ? requested : "dashboard";
 
     document.querySelectorAll("[data-route]").forEach((link) => {
       link.classList.toggle("active", link.dataset.route === currentRoute);
     });
 
+    if (currentRoute === "dashboard" && window.ES04Dashboard) {
+      window.ES04Dashboard.render($("#view"), {
+        apiFetch,
+        formatMoney,
+        formatDate,
+        escapeHtml,
+        showAlert,
+      });
+      return;
+    }
+
+    if (window.ES04Dashboard) window.ES04Dashboard.destroy();
+
     if (currentRoute === "products") renderProducts();
     else if (currentRoute === "sales") renderSales();
     else renderNewSale();
   }
-
-  /* ---------- Products ---------- */
 
   function renderProducts() {
     $("#view").innerHTML = `
@@ -366,8 +376,6 @@
       showAlert(error.message);
     }
   }
-
-  /* ---------- Sales list ---------- */
 
   function renderSales() {
     $("#view").innerHTML = `
@@ -503,8 +511,6 @@
 
     bootstrap.Modal.getOrCreateInstance($("#sale-modal")).show();
   }
-
-  /* ---------- New sale ---------- */
 
   function saleLineHtml(products) {
     const options = products
@@ -684,8 +690,6 @@
     });
   }
 
-  /* ---------- Init ---------- */
-
   function init() {
     loadSession();
 
@@ -711,7 +715,7 @@
       } finally {
         button.disabled = false;
         $("#login-spinner").classList.add("d-none");
-        $("#login-label").textContent = "Ingresar";
+        $("#login-label").textContent = "Ingresar al sistema";
       }
     });
 
