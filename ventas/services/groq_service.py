@@ -173,3 +173,5 @@ def generar_diagnostico_groq(contexto: dict[str, Any], enfoque: str = "general")
     resultado = _extract_json_payload(str(content))
     resultado["modelo"] = model
     return resultado
+def ejecutar_analisis_groq(contexto: dict[str, Any], enfoque: str = "general") -> dict[str, Any]:
+    return generar_diagnostico_groq(contexto, enfoque=enfoque)
