@@ -25,25 +25,25 @@
                 <div class="brand-badge mx-auto mb-3">
                   <i class="bi bi-graph-up-arrow"></i>
                 </div>
-                <h1 class="h4 fw-bold mb-1">Control de Ventas</h1>
-                <p class="text-muted small mb-0">Plataforma de gestión comercial e inteligencia de inventario</p>
+                <h1 class="h4 fw-bold mb-1 login-title">Iniciar Sesión</h1>
+                <p class="login-subtitle small mb-0">Accede a tu panel de Control de Ventas</p>
               </div>
               <form id="login-form" novalidate>
                 <div class="mb-3">
-                  <label for="login-username" class="form-label fw-medium small">Usuario</label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                    <input type="text" id="login-username" class="form-control border-start-0 ps-0" autocomplete="username" placeholder="Ingresa tu usuario" required>
+                  <label for="login-username" class="form-label fw-medium small login-label">Usuario</label>
+                  <div class="input-group login-input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" id="login-username" class="form-control ps-0" autocomplete="username" placeholder="Ingresa tu usuario" required>
                   </div>
                 </div>
                 <div class="mb-4">
-                  <label for="login-password" class="form-label fw-medium small">Contraseña</label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-                    <input type="password" id="login-password" class="form-control border-start-0 ps-0" autocomplete="current-password" placeholder="Ingresa tu contraseña" required>
+                  <label for="login-password" class="form-label fw-medium small login-label">Contraseña</label>
+                  <div class="input-group login-input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="login-password" class="form-control ps-0" autocomplete="current-password" placeholder="Ingresa tu contraseña" required>
                   </div>
                 </div>
-                <button type="submit" id="login-submit" class="btn btn-brand w-100 py-2 fw-semibold">
+                <button type="submit" id="login-submit" class="btn btn-login-emerald w-100 py-2 fw-semibold">
                   <span id="login-spinner" class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
                   <span id="login-label">Ingresar al sistema</span>
                 </button>
@@ -89,6 +89,9 @@
             </li>
           </ul>
           <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+            <span class="live-pill d-none d-md-inline-flex align-items-center gap-2">
+              <span class="live-dot"></span>En línea
+            </span>
             <span class="user-pill" id="nav-username"></span>
             <button type="button" id="logout-button" class="btn btn-outline-light btn-sm px-3 rounded-3">
               <i class="bi bi-box-arrow-right me-1"></i>Salir

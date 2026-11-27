@@ -231,10 +231,10 @@
     const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
     return `
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <small class="text-muted">${count} registro(s) · página ${page} de ${totalPages}</small>
+        <small class="text-muted tabular-nums">${count} registro(s) · página ${page} de ${totalPages}</small>
         <div class="btn-group">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>Anterior</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-page="${page + 1}" ${page >= totalPages ? "disabled" : ""}>Siguiente</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm bg-white" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>Anterior</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm bg-white" data-page="${page + 1}" ${page >= totalPages ? "disabled" : ""}>Siguiente</button>
         </div>
       </div>`;
   }
@@ -306,20 +306,33 @@
     else renderNewSale();
   }
 
+  function stockBadgeHtml(product) {
+    if (Number(product.stock) === 0) {
+      return '<span class="badge rounded-pill text-bg-danger">Sin stock</span>';
+    }
+    if (product.is_low_stock || Number(product.stock) <= 5) {
+      return `<span class="badge rounded-pill text-bg-warning">Stock bajo (${product.stock})</span>`;
+    }
+    return `<span class="badge rounded-pill text-bg-success">Disponible (${product.stock})</span>`;
+  }
+
   function renderProducts() {
     $("#view").innerHTML = `
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <h2 class="h4 mb-0">Catálogo de productos</h2>
+        <div>
+          <h1 class="h4 fw-bold mb-0">Catálogo de productos</h1>
+          <span class="text-muted small">Control de precios y disponibilidad de inventario</span>
+        </div>
         <form id="product-search-form" class="d-flex gap-2" role="search">
-          <input type="search" id="product-search" class="form-control" placeholder="Buscar por código o nombre" value="${escapeHtml(productsView.search)}">
-          <button type="submit" class="btn btn-primary">Buscar</button>
+          <input type="search" id="product-search" class="form-control bg-white" placeholder="Buscar por código o nombre" value="${escapeHtml(productsView.search)}">
+          <button type="submit" class="btn btn-brand px-3">Buscar</button>
         </form>
       </div>
-      <div class="card">
+      <div class="card overflow-hidden">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr><th>Código</th><th>Nombre</th><th class="text-end">Precio</th><th class="text-end">Stock</th></tr>
+            <thead>
+              <tr><th>Código</th><th>Nombre</th><th class="text-end">Precio</th><th class="text-end">Estado / Stock</th></tr>
             </thead>
             <tbody id="products-body">${skeletonRows(5, 4)}</tbody>
           </table>
@@ -354,13 +367,10 @@
             .map(
               (product) => `
               <tr>
-                <td>${escapeHtml(product.codigo)}</td>
-                <td>${escapeHtml(product.nombre)}</td>
-                <td class="text-end">${formatMoney(product.precio)}</td>
-                <td class="text-end">
-                  <span class="badge text-bg-${product.is_low_stock ? "danger" : "success"}">${product.stock}</span>
-                  ${product.stock === 0 ? '<small class="text-danger ms-1">Sin stock</small>' : ""}
-                </td>
+                <td class="fw-medium tabular-nums">${escapeHtml(product.codigo)}</td>
+                <td class="fw-semibold">${escapeHtml(product.nombre)}</td>
+                <td class="text-end tabular-nums">${formatMoney(product.precio)}</td>
+                <td class="text-end tabular-nums">${stockBadgeHtml(product)}</td>
               </tr>`
             )
             .join("")
@@ -380,24 +390,27 @@
   function renderSales() {
     $("#view").innerHTML = `
       <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
-        <h2 class="h4 mb-0">Ventas</h2>
+        <div>
+          <h1 class="h4 fw-bold mb-0">Historial de ventas</h1>
+          <span class="text-muted small">Consulta de folios, clientes, montos y detalle por venta</span>
+        </div>
         <form id="sales-filter-form" class="d-flex flex-wrap align-items-end gap-2">
           <div>
             <label for="filter-from" class="form-label mb-0 small">Desde</label>
-            <input type="date" id="filter-from" class="form-control form-control-sm" value="${escapeHtml(salesView.dateFrom)}">
+            <input type="date" id="filter-from" class="form-control form-control-sm bg-white" value="${escapeHtml(salesView.dateFrom)}">
           </div>
           <div>
             <label for="filter-to" class="form-label mb-0 small">Hasta</label>
-            <input type="date" id="filter-to" class="form-control form-control-sm" value="${escapeHtml(salesView.dateTo)}">
+            <input type="date" id="filter-to" class="form-control form-control-sm bg-white" value="${escapeHtml(salesView.dateTo)}">
           </div>
-          <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-          <button type="button" id="filter-clear" class="btn btn-outline-secondary btn-sm">Limpiar</button>
+          <button type="submit" class="btn btn-brand btn-sm px-3">Filtrar</button>
+          <button type="button" id="filter-clear" class="btn btn-outline-secondary btn-sm bg-white">Limpiar</button>
         </form>
       </div>
-      <div class="card">
+      <div class="card overflow-hidden">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead>
               <tr><th>Folio</th><th>Cliente</th><th>Fecha</th><th class="text-end">Ítems</th><th class="text-end">Total</th><th></th></tr>
             </thead>
             <tbody id="sales-body">${skeletonRows(5, 6)}</tbody>
@@ -453,11 +466,11 @@
             .map(
               (sale) => `
               <tr>
-                <td>${escapeHtml(sale.folio)}</td>
+                <td class="fw-semibold tabular-nums">${escapeHtml(sale.folio)}</td>
                 <td>${escapeHtml(sale.cliente)}</td>
-                <td>${formatDate(sale.fecha)}</td>
-                <td class="text-end">${sale.detalles.length}</td>
-                <td class="text-end">${formatMoney(sale.total)}</td>
+                <td class="tabular-nums">${formatDate(sale.fecha)}</td>
+                <td class="text-end tabular-nums">${sale.detalles.length}</td>
+                <td class="text-end fw-semibold tabular-nums">${formatMoney(sale.total)}</td>
                 <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm" data-sale-id="${sale.id}">Ver detalle</button></td>
               </tr>`
             )
@@ -485,9 +498,9 @@
         (item) => `
         <tr>
           <td>${escapeHtml(item.producto_nombre)}</td>
-          <td class="text-end">${item.cantidad}</td>
-          <td class="text-end">${formatMoney(item.precio_unitario)}</td>
-          <td class="text-end">${formatMoney(item.subtotal)}</td>
+          <td class="text-end tabular-nums">${item.cantidad}</td>
+          <td class="text-end tabular-nums">${formatMoney(item.precio_unitario)}</td>
+          <td class="text-end tabular-nums">${formatMoney(item.subtotal)}</td>
         </tr>`
       )
       .join("");
@@ -495,7 +508,7 @@
     $("#sale-modal-body").innerHTML = `
       <p class="mb-3">
         <strong>Cliente:</strong> ${escapeHtml(sale.cliente)}<br>
-        <strong>Fecha:</strong> ${formatDate(sale.fecha)}
+        <strong>Fecha:</strong> <span class="tabular-nums">${formatDate(sale.fecha)}</span>
       </p>
       <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
@@ -504,7 +517,7 @@
           </thead>
           <tbody>${rows}</tbody>
           <tfoot>
-            <tr><th colspan="3" class="text-end">Total</th><th class="text-end">${formatMoney(sale.total)}</th></tr>
+            <tr><th colspan="3" class="text-end">Total</th><th class="text-end tabular-nums">${formatMoney(sale.total)}</th></tr>
           </tfoot>
         </table>
       </div>`;
@@ -516,7 +529,7 @@
     const options = products
       .map(
         (product) => `
-        <option value="${product.id}" data-price="${escapeHtml(product.precio)}" ${product.stock <= 0 ? "disabled" : ""}>
+        <option value="${product.id}" data-price="${escapeHtml(product.precio)}" data-stock="${escapeHtml(product.stock)}" ${product.stock <= 0 ? "disabled" : ""}>
           ${escapeHtml(product.nombre)} · ${formatMoney(product.precio)} (stock: ${product.stock})
         </option>`
       )
@@ -531,7 +544,7 @@
           </select>
         </div>
         <div class="col-8 col-sm-2">
-          <input type="number" class="form-control line-quantity" aria-label="Cantidad" min="1" step="1" value="1" required>
+          <input type="number" class="form-control line-quantity tabular-nums" aria-label="Cantidad" min="1" step="1" value="1" required>
         </div>
         <div class="col-4 col-sm-2 text-end">
           <button type="button" class="btn btn-outline-danger btn-sm remove-line">Quitar</button>
@@ -541,15 +554,42 @@
 
   function recalculateSaleTotal() {
     let total = 0;
+    const requested = new Map();
+    const warnings = [];
+
     document.querySelectorAll(".sale-line").forEach((row) => {
       const select = row.querySelector(".line-product");
       const quantity = Number(row.querySelector(".line-quantity").value);
       const option = select.options[select.selectedIndex];
       const price = option && option.dataset.price ? Number(option.dataset.price) : 0;
       if (Number.isFinite(quantity) && quantity > 0) total += price * quantity;
+
+      if (select.value && Number.isFinite(quantity) && quantity > 0) {
+        const pid = Number(select.value);
+        requested.set(pid, (requested.get(pid) || 0) + quantity);
+      }
     });
+
+    requested.forEach((qty, pid) => {
+      const prod = Array.isArray(state.products) ? state.products.find((p) => p.id === pid) : null;
+      if (prod && qty > Number(prod.stock)) {
+        warnings.push(`"${prod.nombre}" supera el stock disponible (${prod.stock} uds).`);
+      }
+    });
+
     const totalElement = $("#sale-total");
     if (totalElement) totalElement.textContent = formatMoney(total);
+
+    const warnBox = $("#sale-stock-warning");
+    if (warnBox) {
+      if (warnings.length) {
+        warnBox.textContent = warnings.join(" ");
+        warnBox.classList.remove("d-none");
+      } else {
+        warnBox.textContent = "";
+        warnBox.classList.add("d-none");
+      }
+    }
   }
 
   function updateRemoveButtons() {
@@ -589,7 +629,7 @@
 
   async function renderNewSale() {
     $("#view").innerHTML = `
-      <h2 class="h4 mb-3">Registrar venta</h2>
+      <h1 class="h4 fw-bold mb-3">Registrar venta</h1>
       <div id="sale-form-host">
         <div class="card card-body placeholder-glow">
           <span class="placeholder col-12 mb-3"></span>
@@ -617,20 +657,21 @@
       <form id="sale-form" class="card card-body" novalidate>
         <div class="row g-3 mb-3">
           <div class="col-md-8">
-            <label for="sale-client" class="form-label">Cliente</label>
-            <input type="text" id="sale-client" class="form-control" maxlength="120" required>
+            <label for="sale-client" class="form-label fw-medium">Cliente</label>
+            <input type="text" id="sale-client" class="form-control" maxlength="120" placeholder="Nombre del cliente o razón social" required>
           </div>
           <div class="col-md-4">
-            <label for="sale-date" class="form-label">Fecha</label>
-            <input type="date" id="sale-date" class="form-control" value="${todayLocal()}" required>
+            <label for="sale-date" class="form-label fw-medium">Fecha</label>
+            <input type="date" id="sale-date" class="form-control tabular-nums" value="${todayLocal()}" required>
           </div>
         </div>
-        <h3 class="h6">Productos</h3>
+        <h2 class="h6 fw-bold">Productos</h2>
         <div id="sale-lines" class="d-grid gap-2 mb-2">${saleLineHtml(state.products)}</div>
         <button type="button" id="add-line" class="btn btn-outline-primary btn-sm align-self-start mb-3">+ Agregar producto</button>
+        <div id="sale-stock-warning" class="alert alert-warning py-2 small d-none mb-3" role="alert"></div>
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-top pt-3">
-          <div class="fs-5">Total estimado: <strong id="sale-total">${formatMoney(0)}</strong></div>
-          <button type="submit" id="sale-submit" class="btn btn-success">
+          <div class="fs-5 tabular-nums">Total estimado: <strong id="sale-total">${formatMoney(0)}</strong></div>
+          <button type="submit" id="sale-submit" class="btn btn-success px-4 fw-semibold">
             <span id="sale-spinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
             Registrar venta
           </button>

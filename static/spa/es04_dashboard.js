@@ -72,13 +72,13 @@
           <p class="text-muted small mb-0" id="dash-period-label">Indicadores en tiempo real desde PostgreSQL y diagnóstico asistido por IA</p>
         </div>
         <div class="d-flex flex-wrap align-items-center gap-2">
-          <select id="dash-days" class="form-select form-select-sm" style="width: auto;" aria-label="Período de análisis">
+          <select id="dash-days" class="form-select form-select-sm fw-medium" style="width: auto;" aria-label="Período de análisis">
             <option value="7" ${selectedDays === 7 ? "selected" : ""}>Últimos 7 días</option>
             <option value="30" ${selectedDays === 30 ? "selected" : ""}>Últimos 30 días</option>
             <option value="90" ${selectedDays === 90 ? "selected" : ""}>Últimos 90 días</option>
             <option value="365" ${selectedDays === 365 ? "selected" : ""}>Último año</option>
           </select>
-          <button type="button" id="dash-refresh" class="btn btn-outline-secondary btn-sm">
+          <button type="button" id="dash-refresh" class="btn btn-outline-secondary btn-sm bg-white">
             <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
           </button>
         </div>
@@ -135,7 +135,7 @@
                 <h2 class="h5 fw-bold mb-0">Diagnóstico Inteligente de Negocio</h2>
               </div>
               <div class="d-flex flex-wrap align-items-center gap-2">
-                <select id="ai-focus" class="form-select form-select-sm" style="width: auto;" aria-label="Enfoque del análisis">
+                <select id="ai-focus" class="form-select form-select-sm fw-medium" style="width: auto;" aria-label="Enfoque del análisis">
                   <option value="general" ${selectedFocus === "general" ? "selected" : ""}>Enfoque General</option>
                   <option value="reposicion" ${selectedFocus === "reposicion" ? "selected" : ""}>Reposición de Stock</option>
                   <option value="ventas" ${selectedFocus === "ventas" ? "selected" : ""}>Rendimiento de Ventas</option>
@@ -157,7 +157,7 @@
           <div class="card p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h2 class="h6 fw-bold mb-0"><i class="bi bi-clock-history me-1 text-primary"></i>Historial de Análisis</h2>
-              <span class="badge text-bg-light border" id="ai-history-count">0</span>
+              <span class="badge text-bg-light border tabular-nums" id="ai-history-count">0</span>
             </div>
             <div id="ai-history-list" class="d-flex flex-column gap-2"></div>
           </div>
@@ -177,42 +177,47 @@
       periodLabel.textContent = `Período analizado: ${ctx.formatDate(data.fecha_inicio)} al ${ctx.formatDate(data.fecha_fin)} (${data.periodo_dias} días)`;
     }
 
+    const dailyAvg =
+      data.periodo_dias > 0 ? Number(kpis.ingresos_periodo || 0) / Number(data.periodo_dias) : 0;
+    const alertsCount = Number(kpis.stock_bajo || 0) + Number(kpis.sin_stock || 0);
+    const alertAccent = alertsCount > 0 ? "#d97706" : "#10b981";
+
     el.innerHTML = `
       <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card">
+        <div class="kpi-card" style="--kpi-accent:#4f46e5;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Ingresos del período</span>
             <span class="kpi-icon" style="background:#eef2ff;color:#4f46e5;"><i class="bi bi-cash-coin"></i></span>
           </div>
           <div class="kpi-value">${ctx.escapeHtml(ctx.formatMoney(kpis.ingresos_periodo))}</div>
-          <div class="text-muted small mt-1">${kpis.total_ventas_periodo} venta(s) registradas</div>
+          <div class="text-muted small mt-1 tabular-nums">${kpis.total_ventas_periodo} venta(s) &middot; ~${ctx.escapeHtml(ctx.formatMoney(dailyAvg))}/día</div>
         </div>
       </div>
 
       <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card">
+        <div class="kpi-card" style="--kpi-accent:#10b981;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Valor en inventario</span>
             <span class="kpi-icon" style="background:#ecfdf5;color:#059669;"><i class="bi bi-box-seam"></i></span>
           </div>
           <div class="kpi-value">${ctx.escapeHtml(ctx.formatMoney(kpis.valor_inventario))}</div>
-          <div class="text-muted small mt-1">${kpis.total_productos} productos activos</div>
+          <div class="text-muted small mt-1 tabular-nums">${kpis.total_productos} productos activos</div>
         </div>
       </div>
 
       <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card">
+        <div class="kpi-card" style="--kpi-accent:${alertAccent};">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Alertas de stock</span>
             <span class="kpi-icon" style="background:#fef3c7;color:#d97706;"><i class="bi bi-exclamation-triangle"></i></span>
           </div>
-          <div class="kpi-value">${kpis.stock_bajo + kpis.sin_stock}</div>
-          <div class="text-muted small mt-1">${kpis.sin_stock} sin stock &middot; ${kpis.stock_bajo} stock bajo</div>
+          <div class="kpi-value">${alertsCount}</div>
+          <div class="text-muted small mt-1 tabular-nums">${kpis.sin_stock} sin stock &middot; ${kpis.stock_bajo} stock bajo</div>
         </div>
       </div>
 
       <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card">
+        <div class="kpi-card" style="--kpi-accent:#7c3aed;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Producto más vendido</span>
             <span class="kpi-icon" style="background:#f3e8ff;color:#7c3aed;"><i class="bi bi-trophy"></i></span>
@@ -220,7 +225,7 @@
           <div class="kpi-value text-truncate" style="font-size:1.15rem;" title="${top ? ctx.escapeHtml(top.nombre) : "Sin datos"}">
             ${top ? ctx.escapeHtml(top.nombre) : "Sin ventas"}
           </div>
-          <div class="text-muted small mt-1">
+          <div class="text-muted small mt-1 tabular-nums">
             ${top ? `${top.unidades} uds &middot; ${ctx.escapeHtml(ctx.formatMoney(top.ingresos))}` : "Registra una venta para ver métricas"}
           </div>
         </div>
@@ -241,6 +246,12 @@
     } else {
       salesCanvas.classList.remove("d-none");
       salesEmpty.classList.add("d-none");
+      const salesCtx = salesCanvas.getContext("2d");
+      const gradient = salesCtx.createLinearGradient(0, 0, 0, 290);
+      gradient.addColorStop(0, "rgba(79, 70, 229, 0.32)");
+      gradient.addColorStop(0.65, "rgba(16, 185, 129, 0.08)");
+      gradient.addColorStop(1, "rgba(79, 70, 229, 0.0)");
+
       salesChart = new Chart(salesCanvas, {
         type: "line",
         data: {
@@ -250,12 +261,15 @@
               label: "Ingresos (CLP)",
               data: salesSeries.map((r) => r.ingresos),
               borderColor: "#4f46e5",
-              backgroundColor: "rgba(79, 70, 229, 0.14)",
-              borderWidth: 2.5,
+              backgroundColor: gradient,
+              borderWidth: 2.75,
               fill: true,
-              tension: 0.3,
+              tension: 0.35,
               pointRadius: 4,
               pointHoverRadius: 6,
+              pointBackgroundColor: "#4f46e5",
+              pointBorderColor: "#ffffff",
+              pointBorderWidth: 2,
             },
           ],
         },
@@ -265,6 +279,11 @@
           plugins: {
             legend: { display: false },
             tooltip: {
+              backgroundColor: "#0f172a",
+              titleColor: "#f8fafc",
+              bodyColor: "#e2e8f0",
+              padding: 10,
+              cornerRadius: 8,
               callbacks: {
                 label: (item) => {
                   const row = salesSeries[item.dataIndex];
@@ -276,9 +295,13 @@
           scales: {
             y: {
               beginAtZero: true,
+              grid: { color: "rgba(148, 163, 184, 0.16)" },
               ticks: {
                 callback: (val) => ctx.formatMoney(val),
               },
+            },
+            x: {
+              grid: { display: false },
             },
           },
         },
@@ -325,6 +348,11 @@
           plugins: {
             legend: { display: false },
             tooltip: {
+              backgroundColor: "#0f172a",
+              titleColor: "#f8fafc",
+              bodyColor: "#e2e8f0",
+              padding: 10,
+              cornerRadius: 8,
               callbacks: {
                 title: (items) => stockSeries[items[0].dataIndex].nombre,
                 label: (item) => {
@@ -335,7 +363,13 @@
             },
           },
           scales: {
-            x: { beginAtZero: true },
+            x: {
+              beginAtZero: true,
+              grid: { color: "rgba(148, 163, 184, 0.16)" },
+            },
+            y: {
+              grid: { display: false },
+            },
           },
         },
       });
@@ -382,7 +416,7 @@
             </span>
             <span class="badge text-bg-light border text-capitalize">${ctx.escapeHtml(record.enfoque)}</span>
           </div>
-          <span class="text-muted small">
+          <span class="text-muted small tabular-nums">
             <i class="bi bi-calendar3 me-1"></i>${ctx.escapeHtml(formatDateTime(record.fecha_creacion))}
             ${record.modelo ? ` &middot; ${ctx.escapeHtml(record.modelo)}` : ""}
           </span>
@@ -393,18 +427,18 @@
         <div class="row g-3">
           <div class="col-12 col-md-7">
             <h3 class="h6 fw-bold mb-2"><i class="bi bi-check2-circle text-success me-1"></i>Acciones prioritarias</h3>
-            <ul class="list-group list-group-flush small">
+            <div class="d-grid gap-2 small">
               ${
                 acciones.length
                   ? acciones
                       .map(
-                        (a) =>
-                          `<li class="list-group-item px-0 py-1 border-0"><i class="bi bi-arrow-right-short text-primary"></i>${ctx.escapeHtml(a)}</li>`
+                        (a, idx) =>
+                          `<div class="ai-action-item"><span class="ai-action-num">${String(idx + 1).padStart(2, "0")}</span><span>${ctx.escapeHtml(a)}</span></div>`
                       )
                       .join("")
-                  : '<li class="list-group-item px-0 text-muted border-0">Sin acciones sugeridas.</li>'
+                  : '<span class="text-muted">Sin acciones sugeridas.</span>'
               }
-            </ul>
+            </div>
           </div>
           <div class="col-12 col-md-5">
             <h3 class="h6 fw-bold mb-2"><i class="bi bi-exclamation-octagon text-danger me-1"></i>Productos críticos</h3>
@@ -441,17 +475,26 @@
       .map((item) => {
         const isActive = activeAnalysis && activeAnalysis.id === item.id;
         const ok = item.estado === "OK";
+        const preview =
+          item.resultado && item.resultado.resumen_ejecutivo
+            ? item.resultado.resumen_ejecutivo
+            : item.mensaje_error || "";
         return `
           <button type="button" data-ai-id="${item.id}" class="btn text-start p-2 rounded-3 border ${
             isActive ? "border-primary bg-primary bg-opacity-10" : "bg-light"
           }">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="fw-semibold small text-capitalize">#${item.id} &middot; ${ctx.escapeHtml(item.enfoque)}</span>
+              <span class="fw-semibold small text-capitalize tabular-nums">#${item.id} &middot; ${ctx.escapeHtml(item.enfoque)}</span>
               <span class="badge ${ok ? "text-bg-success" : "text-bg-danger"}" style="font-size: 0.7rem;">${ctx.escapeHtml(item.estado)}</span>
             </div>
-            <div class="text-muted" style="font-size: 0.75rem;">
+            <div class="text-muted tabular-nums" style="font-size: 0.75rem;">
               ${ctx.escapeHtml(formatDateTime(item.fecha_creacion))}
             </div>
+            ${
+              preview
+                ? `<div class="text-secondary text-truncate mt-1" style="font-size: 0.76rem;">${ctx.escapeHtml(preview)}</div>`
+                : ""
+            }
           </button>
         `;
       })
