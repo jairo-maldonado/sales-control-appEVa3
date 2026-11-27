@@ -112,7 +112,7 @@ def generar_diagnostico_groq(contexto: dict[str, Any], enfoque: str = "general")
     except ValueError:
         timeout = 15
 
-    url = "[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)"
+    url = "https://api.groq.com/openai/v1/chat/completions"
     payload = {
         "model": model,
         "temperature": 0.2,
