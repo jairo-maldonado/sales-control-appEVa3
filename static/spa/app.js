@@ -233,8 +233,8 @@
       <div class="d-flex justify-content-between align-items-center mt-3">
         <small class="text-muted tabular-nums">${count} registro(s) · página ${page} de ${totalPages}</small>
         <div class="btn-group">
-          <button type="button" class="btn btn-outline-secondary btn-sm bg-white" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>Anterior</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm bg-white" data-page="${page + 1}" ${page >= totalPages ? "disabled" : ""}>Siguiente</button>
+          <button type="button" class="btn btn-outline-light btn-sm" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>Anterior</button>
+          <button type="button" class="btn btn-outline-light btn-sm" data-page="${page + 1}" ${page >= totalPages ? "disabled" : ""}>Siguiente</button>
         </div>
       </div>`;
   }
@@ -324,7 +324,7 @@
           <span class="text-muted small">Control de precios y disponibilidad de inventario</span>
         </div>
         <form id="product-search-form" class="d-flex gap-2" role="search">
-          <input type="search" id="product-search" class="form-control bg-white" placeholder="Buscar por código o nombre" value="${escapeHtml(productsView.search)}">
+          <input type="search" id="product-search" class="form-control" placeholder="Buscar por código o nombre" value="${escapeHtml(productsView.search)}">
           <button type="submit" class="btn btn-brand px-3">Buscar</button>
         </form>
       </div>
@@ -397,14 +397,14 @@
         <form id="sales-filter-form" class="d-flex flex-wrap align-items-end gap-2">
           <div>
             <label for="filter-from" class="form-label mb-0 small">Desde</label>
-            <input type="date" id="filter-from" class="form-control form-control-sm bg-white" value="${escapeHtml(salesView.dateFrom)}">
+            <input type="date" id="filter-from" class="form-control form-control-sm" value="${escapeHtml(salesView.dateFrom)}">
           </div>
           <div>
             <label for="filter-to" class="form-label mb-0 small">Hasta</label>
-            <input type="date" id="filter-to" class="form-control form-control-sm bg-white" value="${escapeHtml(salesView.dateTo)}">
+            <input type="date" id="filter-to" class="form-control form-control-sm" value="${escapeHtml(salesView.dateTo)}">
           </div>
           <button type="submit" class="btn btn-brand btn-sm px-3">Filtrar</button>
-          <button type="button" id="filter-clear" class="btn btn-outline-secondary btn-sm bg-white">Limpiar</button>
+          <button type="button" id="filter-clear" class="btn btn-outline-light btn-sm">Limpiar</button>
         </form>
       </div>
       <div class="card overflow-hidden">
@@ -471,7 +471,7 @@
                 <td class="tabular-nums">${formatDate(sale.fecha)}</td>
                 <td class="text-end tabular-nums">${sale.detalles.length}</td>
                 <td class="text-end fw-semibold tabular-nums">${formatMoney(sale.total)}</td>
-                <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm" data-sale-id="${sale.id}">Ver detalle</button></td>
+                <td class="text-end"><button type="button" class="btn btn-outline-info btn-sm" data-sale-id="${sale.id}">Ver detalle</button></td>
               </tr>`
             )
             .join("")
@@ -667,11 +667,11 @@
         </div>
         <h2 class="h6 fw-bold">Productos</h2>
         <div id="sale-lines" class="d-grid gap-2 mb-2">${saleLineHtml(state.products)}</div>
-        <button type="button" id="add-line" class="btn btn-outline-primary btn-sm align-self-start mb-3">+ Agregar producto</button>
+        <button type="button" id="add-line" class="btn btn-outline-info btn-sm align-self-start mb-3">+ Agregar producto</button>
         <div id="sale-stock-warning" class="alert alert-warning py-2 small d-none mb-3" role="alert"></div>
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-top pt-3">
           <div class="fs-5 tabular-nums">Total estimado: <strong id="sale-total">${formatMoney(0)}</strong></div>
-          <button type="submit" id="sale-submit" class="btn btn-success px-4 fw-semibold">
+          <button type="submit" id="sale-submit" class="btn btn-login-emerald px-4 fw-semibold">
             <span id="sale-spinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
             Registrar venta
           </button>

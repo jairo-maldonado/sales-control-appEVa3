@@ -78,7 +78,7 @@
             <option value="90" ${selectedDays === 90 ? "selected" : ""}>Últimos 90 días</option>
             <option value="365" ${selectedDays === 365 ? "selected" : ""}>Último año</option>
           </select>
-          <button type="button" id="dash-refresh" class="btn btn-outline-secondary btn-sm bg-white">
+          <button type="button" id="dash-refresh" class="btn btn-outline-light btn-sm">
             <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
           </button>
         </div>
@@ -94,7 +94,7 @@
                 <h2 class="h6 fw-bold mb-0">Evolución de Ingresos</h2>
                 <span class="text-muted small">Montos diarios facturados en el período</span>
               </div>
-              <span class="badge text-bg-light border">Chart.js</span>
+              <span class="badge dark-pill">Chart.js</span>
             </div>
             <div class="chart-container">
               <canvas id="chart-sales"></canvas>
@@ -112,7 +112,7 @@
                 <h2 class="h6 fw-bold mb-0">Estado de Inventario</h2>
                 <span class="text-muted small">Productos con menor stock disponible</span>
               </div>
-              <span class="badge text-bg-light border">Alerta &le; 5</span>
+              <span class="badge dark-pill">Alerta &le; 5</span>
             </div>
             <div class="chart-container">
               <canvas id="chart-stock"></canvas>
@@ -156,8 +156,8 @@
         <div class="col-12 col-lg-4">
           <div class="card p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h2 class="h6 fw-bold mb-0"><i class="bi bi-clock-history me-1 text-primary"></i>Historial de Análisis</h2>
-              <span class="badge text-bg-light border tabular-nums" id="ai-history-count">0</span>
+              <h2 class="h6 fw-bold mb-0"><i class="bi bi-clock-history me-1 text-info"></i>Historial de Análisis</h2>
+              <span class="badge dark-pill tabular-nums" id="ai-history-count">0</span>
             </div>
             <div id="ai-history-list" class="d-flex flex-column gap-2"></div>
           </div>
@@ -180,14 +180,14 @@
     const dailyAvg =
       data.periodo_dias > 0 ? Number(kpis.ingresos_periodo || 0) / Number(data.periodo_dias) : 0;
     const alertsCount = Number(kpis.stock_bajo || 0) + Number(kpis.sin_stock || 0);
-    const alertAccent = alertsCount > 0 ? "#d97706" : "#10b981";
+    const alertAccent = alertsCount > 0 ? "#f59e0b" : "#10b981";
 
     el.innerHTML = `
       <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card" style="--kpi-accent:#4f46e5;">
+        <div class="kpi-card" style="--kpi-accent:#6366f1;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Ingresos del período</span>
-            <span class="kpi-icon" style="background:#eef2ff;color:#4f46e5;"><i class="bi bi-cash-coin"></i></span>
+            <span class="kpi-icon" style="background:rgba(99,102,241,0.16);color:#a5b4fc;"><i class="bi bi-cash-coin"></i></span>
           </div>
           <div class="kpi-value">${ctx.escapeHtml(ctx.formatMoney(kpis.ingresos_periodo))}</div>
           <div class="text-muted small mt-1 tabular-nums">${kpis.total_ventas_periodo} venta(s) &middot; ~${ctx.escapeHtml(ctx.formatMoney(dailyAvg))}/día</div>
@@ -198,7 +198,7 @@
         <div class="kpi-card" style="--kpi-accent:#10b981;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Valor en inventario</span>
-            <span class="kpi-icon" style="background:#ecfdf5;color:#059669;"><i class="bi bi-box-seam"></i></span>
+            <span class="kpi-icon" style="background:rgba(16,185,129,0.16);color:#6ee7b7;"><i class="bi bi-box-seam"></i></span>
           </div>
           <div class="kpi-value">${ctx.escapeHtml(ctx.formatMoney(kpis.valor_inventario))}</div>
           <div class="text-muted small mt-1 tabular-nums">${kpis.total_productos} productos activos</div>
@@ -209,7 +209,7 @@
         <div class="kpi-card" style="--kpi-accent:${alertAccent};">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Alertas de stock</span>
-            <span class="kpi-icon" style="background:#fef3c7;color:#d97706;"><i class="bi bi-exclamation-triangle"></i></span>
+            <span class="kpi-icon" style="background:rgba(245,158,11,0.16);color:#fcd34d;"><i class="bi bi-exclamation-triangle"></i></span>
           </div>
           <div class="kpi-value">${alertsCount}</div>
           <div class="text-muted small mt-1 tabular-nums">${kpis.sin_stock} sin stock &middot; ${kpis.stock_bajo} stock bajo</div>
@@ -217,10 +217,10 @@
       </div>
 
       <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card" style="--kpi-accent:#7c3aed;">
+        <div class="kpi-card" style="--kpi-accent:#8b5cf6;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <span class="text-muted small fw-medium">Producto más vendido</span>
-            <span class="kpi-icon" style="background:#f3e8ff;color:#7c3aed;"><i class="bi bi-trophy"></i></span>
+            <span class="kpi-icon" style="background:rgba(139,92,246,0.18);color:#c4b5fd;"><i class="bi bi-trophy"></i></span>
           </div>
           <div class="kpi-value text-truncate" style="font-size:1.15rem;" title="${top ? ctx.escapeHtml(top.nombre) : "Sin datos"}">
             ${top ? ctx.escapeHtml(top.nombre) : "Sin ventas"}
@@ -248,9 +248,9 @@
       salesEmpty.classList.add("d-none");
       const salesCtx = salesCanvas.getContext("2d");
       const gradient = salesCtx.createLinearGradient(0, 0, 0, 290);
-      gradient.addColorStop(0, "rgba(79, 70, 229, 0.32)");
-      gradient.addColorStop(0.65, "rgba(16, 185, 129, 0.08)");
-      gradient.addColorStop(1, "rgba(79, 70, 229, 0.0)");
+      gradient.addColorStop(0, "rgba(99, 102, 241, 0.36)");
+      gradient.addColorStop(0.65, "rgba(16, 185, 129, 0.10)");
+      gradient.addColorStop(1, "rgba(15, 23, 42, 0.0)");
 
       salesChart = new Chart(salesCanvas, {
         type: "line",
@@ -260,15 +260,15 @@
             {
               label: "Ingresos (CLP)",
               data: salesSeries.map((r) => r.ingresos),
-              borderColor: "#4f46e5",
+              borderColor: "#818cf8",
               backgroundColor: gradient,
               borderWidth: 2.75,
               fill: true,
               tension: 0.35,
               pointRadius: 4,
               pointHoverRadius: 6,
-              pointBackgroundColor: "#4f46e5",
-              pointBorderColor: "#ffffff",
+              pointBackgroundColor: "#10b981",
+              pointBorderColor: "#0f172a",
               pointBorderWidth: 2,
             },
           ],
@@ -279,9 +279,11 @@
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: "#0f172a",
+              backgroundColor: "#090d16",
               titleColor: "#f8fafc",
               bodyColor: "#e2e8f0",
+              borderColor: "rgba(129, 140, 248, 0.35)",
+              borderWidth: 1,
               padding: 10,
               cornerRadius: 8,
               callbacks: {
@@ -295,13 +297,15 @@
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: "rgba(148, 163, 184, 0.16)" },
+              grid: { color: "rgba(148, 163, 184, 0.12)" },
               ticks: {
+                color: "#94a3b8",
                 callback: (val) => ctx.formatMoney(val),
               },
             },
             x: {
               grid: { display: false },
+              ticks: { color: "#94a3b8" },
             },
           },
         },
@@ -348,9 +352,11 @@
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: "#0f172a",
+              backgroundColor: "#090d16",
               titleColor: "#f8fafc",
               bodyColor: "#e2e8f0",
+              borderColor: "rgba(129, 140, 248, 0.35)",
+              borderWidth: 1,
               padding: 10,
               cornerRadius: 8,
               callbacks: {
@@ -365,10 +371,12 @@
           scales: {
             x: {
               beginAtZero: true,
-              grid: { color: "rgba(148, 163, 184, 0.16)" },
+              grid: { color: "rgba(148, 163, 184, 0.12)" },
+              ticks: { color: "#94a3b8" },
             },
             y: {
               grid: { display: false },
+              ticks: { color: "#cbd5e1" },
             },
           },
         },
@@ -382,8 +390,8 @@
 
     if (!record) {
       body.innerHTML = `
-        <div class="text-center py-4 px-3 border rounded-4 bg-white">
-          <i class="bi bi-robot fs-1 text-primary opacity-75"></i>
+        <div class="text-center py-4 px-3 ai-detail-box">
+          <i class="bi bi-robot fs-1 text-info opacity-75"></i>
           <p class="fw-semibold mt-2 mb-1">Aún no has generado un diagnóstico</p>
           <p class="text-muted small mb-0">
             Presiona <strong>Generar Análisis IA</strong> para que GroqCloud analice tus ventas e inventario reales y entregue recomendaciones priorizadas.
@@ -408,13 +416,13 @@
     const criticos = Array.isArray(res.productos_criticos) ? res.productos_criticos : [];
 
     body.innerHTML = `
-      <div class="bg-white border rounded-4 p-3 p-md-4">
+      <div class="ai-detail-box p-3 p-md-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
           <div class="d-flex align-items-center gap-2">
             <span class="badge rounded-pill risk-badge-${ctx.escapeHtml(risk)} px-3 py-2">
               Riesgo ${ctx.escapeHtml(risk)}
             </span>
-            <span class="badge text-bg-light border text-capitalize">${ctx.escapeHtml(record.enfoque)}</span>
+            <span class="badge dark-pill text-capitalize">${ctx.escapeHtml(record.enfoque)}</span>
           </div>
           <span class="text-muted small tabular-nums">
             <i class="bi bi-calendar3 me-1"></i>${ctx.escapeHtml(formatDateTime(record.fecha_creacion))}
@@ -422,7 +430,7 @@
           </span>
         </div>
 
-        <p class="mb-3" style="line-height: 1.6;">${ctx.escapeHtml(res.resumen_ejecutivo || "")}</p>
+        <p class="mb-3" style="line-height: 1.6; color: #e2e8f0;">${ctx.escapeHtml(res.resumen_ejecutivo || "")}</p>
 
         <div class="row g-3">
           <div class="col-12 col-md-7">
@@ -448,7 +456,7 @@
                   ? criticos
                       .map(
                         (p) =>
-                          `<span class="badge text-bg-danger bg-opacity-10 text-danger border border-danger-subtle px-2 py-1">${ctx.escapeHtml(p)}</span>`
+                          `<span class="badge text-bg-danger bg-opacity-25 text-danger-emphasis border border-danger-subtle px-2 py-1">${ctx.escapeHtml(p)}</span>`
                       )
                       .join("")
                   : '<span class="text-muted small">Sin productos críticos detectados.</span>'
@@ -480,8 +488,8 @@
             ? item.resultado.resumen_ejecutivo
             : item.mensaje_error || "";
         return `
-          <button type="button" data-ai-id="${item.id}" class="btn text-start p-2 rounded-3 border ${
-            isActive ? "border-primary bg-primary bg-opacity-10" : "bg-light"
+          <button type="button" data-ai-id="${item.id}" class="btn text-start p-2 rounded-3 border history-card-item ${
+            isActive ? "is-active" : ""
           }">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="fw-semibold small text-capitalize tabular-nums">#${item.id} &middot; ${ctx.escapeHtml(item.enfoque)}</span>
@@ -492,7 +500,7 @@
             </div>
             ${
               preview
-                ? `<div class="text-secondary text-truncate mt-1" style="font-size: 0.76rem;">${ctx.escapeHtml(preview)}</div>`
+                ? `<div class="text-secondary text-truncate mt-1" style="font-size: 0.76rem; color: #94a3b8 !important;">${ctx.escapeHtml(preview)}</div>`
                 : ""
             }
           </button>
