@@ -173,5 +173,21 @@ def generar_diagnostico_groq(contexto: dict[str, Any], enfoque: str = "general")
     resultado = _extract_json_payload(str(content))
     resultado["modelo"] = model
     return resultado
-def ejecutar_analisis_groq(contexto: dict[str, Any], enfoque: str = "general") -> dict[str, Any]:
-    return generar_diagnostico_groq(contexto, enfoque=enfoque)
+def ejecutar_analisis_groq(
+    contexto: dict[str, Any] | None = None,
+    enfoque: str = "general",
+    dias: int = 30,
+) -> dict[str, Any]:
+    payload_contexto: dict[str, Any] = dict(contexto) if isinstance(contexto, dict) else {}
+    if "dias" not in payload_contexto and "periodo_dias" not in payload_contexto:
+        payload_contexto["dias"] = dias
+    payload_contexto.setdefault("enfoque", enfoque)
+
+    diagnostico = generar_diagnostico_groq(payload_contexto, enfoque=enfoque)
+    modelo = diagnostico.pop("modelo", os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b"))
+
+    return {
+        "datos_entrada": payload_contexto,
+        "resultado": diagnostico,
+        "modelo": modelo,
+    }
